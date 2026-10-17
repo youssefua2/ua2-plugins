@@ -11,6 +11,10 @@ permissions:
   pages: write
   id-token: write
 
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,44 +29,35 @@ jobs:
         with:
           node-version: 20
 
+      - uses: actions/configure-pages@v5
+
       - name: Install dependencies
         run: npm install
 
       - name: Build plugins
         run: npm run build
 
-      - name: Create repository index
+      - name: Package plugins
         run: |
-          node --input-type=module <<'EOF'
-          import fs from 'node:fs';
-          import path from 'node:path';
+          mkdir -p dist/pool
+          for plugin in translator discord-rpc; do
+            mkdir -p "dist/package-$plugin"
+            cp "dist/$plugin/index.js" "dist/package-$plugin/index.js"
+            cp "src/plugins/$plugin/manifest.json" "dist/package-$plugin/manifest.json"
+            cd "dist/package-$plugin"
+            zip -q -r "../pool/$(node -p "const m=require('./manifest.json'); m.id+'@'+m.version").zip" manifest.json index.js
+            cd ../..
+            rm -rf "package-$plugin"
+          done
 
-          const base = 'dist';
-          const plugins = [];
+      - name: Generate repository index
+        run: |
+          npx --yes @revenge-mod/plugin-cli generate-index \
+            --dist dist/pool \
+            --base-url https://youssefua2.github.io/ua2-plugins/pool \
+            --out dist/index.json
 
-          for (const name of fs.readdirSync(base)) {
-            const dir = path.join(base, name);
-            const manifestPath = path.join(dir, 'manifest.json');
-            const scriptPath = path.join(dir, 'index.js');
-
-            if (!fs.existsSync(manifestPath) ||
-                !fs.existsSync(scriptPath)) continue;
-
-            const manifest = JSON.parse(
-              fs.readFileSync(manifestPath, 'utf8')
-            );
-
-            const zip = `${name}.zip`;
-            plugins.push({ ...manifest, file: zip });
-          }
-
-          fs.writeFileSync(
-            path.join(base, 'index.json'),
-            JSON.stringify(plugins, null, 2)
-          );
-          EOF
-
-      - name: Upload artifact
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
