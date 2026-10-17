@@ -1,0 +1,8 @@
+{
+  "id": "com.youssefua2.discord-rpc",
+  "name": "Discord RPC",
+  "description": "Custom Rich Presence for your Discord profile.",
+  "authors": ["youssefua2"],
+  "main": "index.js",
+  "version": "1.0.0"
+}
