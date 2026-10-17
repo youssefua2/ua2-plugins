@@ -1,3 +1,4 @@
+
 name: Build Plugins
 
 on:
@@ -5,13 +6,17 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - uses: actions/checkout@v4
@@ -26,10 +31,42 @@ jobs:
       - name: Build plugins
         run: npm run build
 
+      - name: Create repository index
+        run: |
+          node --input-type=module <<'EOF'
+          import fs from 'node:fs';
+          import path from 'node:path';
+
+          const base = 'dist';
+          const plugins = [];
+
+          for (const name of fs.readdirSync(base)) {
+            const dir = path.join(base, name);
+            const manifestPath = path.join(dir, 'manifest.json');
+            const scriptPath = path.join(dir, 'index.js');
+
+            if (!fs.existsSync(manifestPath) ||
+                !fs.existsSync(scriptPath)) continue;
+
+            const manifest = JSON.parse(
+              fs.readFileSync(manifestPath, 'utf8')
+            );
+
+            const zip = `${name}.zip`;
+            plugins.push({ ...manifest, file: zip });
+          }
+
+          fs.writeFileSync(
+            path.join(base, 'index.json'),
+            JSON.stringify(plugins, null, 2)
+          );
+          EOF
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
