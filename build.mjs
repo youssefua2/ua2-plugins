@@ -1,23 +1,35 @@
+
 import { build } from "esbuild";
-import { readdirSync, existsSync, mkdirSync, copyFileSync } from "fs";
+import {
+  readdirSync,
+  existsSync,
+  mkdirSync,
+  copyFileSync
+} from "fs";
 import { join } from "path";
 
 const pluginsDir = "src/plugins";
 const outDir = "dist";
 
-if (!existsSync(outDir)) mkdirSync(outDir, { recursive: true });
+mkdirSync(outDir, { recursive: true });
 
 for (const plugin of readdirSync(pluginsDir)) {
   const pluginPath = join(pluginsDir, plugin);
   const entry = join(pluginPath, "index.tsx");
+  const outputPluginDir = join(outDir, plugin);
 
-  if (!existsSync(entry)) continue;
+  if (!existsSync(entry)) {
+    console.log(`Skipping ${plugin}: no index.tsx`);
+    continue;
+  }
 
   console.log(`Building ${plugin}...`);
 
+  mkdirSync(outputPluginDir, { recursive: true });
+
   await build({
     entryPoints: [entry],
-    outfile: join(outDir, plugin, "index.js"),
+    outfile: join(outputPluginDir, "index.js"),
     bundle: true,
     format: "esm",
     platform: "neutral",
@@ -34,13 +46,18 @@ for (const plugin of readdirSync(pluginsDir)) {
     logLevel: "info"
   });
 
-  // Copy manifest.json
-  copyFileSync(
-    join(pluginPath, "manifest.json"),
-    join(outDir, plugin, "manifest.json")
-  );
+  const manifest = join(pluginPath, "manifest.json");
 
-  console.log(`✓ ${plugin} built`);
+  if (existsSync(manifest)) {
+    copyFileSync(
+      manifest,
+      join(outputPluginDir, "manifest.json")
+    );
+  } else {
+    console.warn(`No manifest.json found for ${plugin}`);
+  }
+
+  console.log(`Built ${plugin}`);
 }
 
-console.log("All plugins built.");
+console.log("All plugins processed.");
