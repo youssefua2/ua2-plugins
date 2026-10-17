@@ -1,8 +1,21 @@
+
+
 {
+  "format": 1,
   "id": "com.youssefua2.translator",
   "name": "Simple Translator",
   "description": "Translate messages with a simple long-press. Free, no API keys needed.",
-  "authors": ["youssefua2"],
-  "main": "index.js",
-  "version": "1.0.0"
+  "author": "youssefua2",
+  "version": "1.0.0",
+  "dependencies": {
+    "revenge.api": {
+      "version": ">=1 <2"
+    },
+    "discord": {
+      "version": "*"
+    }
+  },
+  "dist": {
+    "script": "index.js"
+  }
 }
