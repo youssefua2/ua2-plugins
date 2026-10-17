@@ -1,8 +1,20 @@
+
 {
+  "format": 1,
   "id": "com.youssefua2.discord-rpc",
   "name": "Discord RPC",
   "description": "Custom Rich Presence for your Discord profile.",
-  "authors": ["youssefua2"],
-  "main": "index.js",
-  "version": "1.0.0"
+  "author": "youssefua2",
+  "version": "1.0.0",
+  "dependencies": {
+    "revenge.api": {
+      "version": ">=1 <2"
+    },
+    "discord": {
+      "version": "*"
+    }
+  },
+  "dist": {
+    "script": "index.js"
+  }
 }
