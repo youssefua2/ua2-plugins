@@ -71,7 +71,7 @@ if (!storage.selected || typeof storage.selected !== "string") {
   storage.selections = { default: createDefaultSelection() };
 }
 
-// --- Asset Resolution ---
+// -- Asset Resolution --
 async function resolveAsset(appId: string, key?: string): Promise<string | undefined> {
   if (!key) return undefined;
   // external URLs and mp: pass through untouched
